@@ -2,44 +2,32 @@
 #include "kernel/stat.h"
 #include "user/user.h"
 
-int fa_fd[2];
-int son_fd[2];
-void primes(int) __attribute__((noreturn));
-void primes(int num) 
+void filter_num(int) __attribute__((noreturn));
+void filter_num(int r_fd)
 {
-    if(pipe(son_fd) == -1) exit(1);
-    int x;
-    int pid = fork();
-    if(pid > 0)
+    int prime;
+    if(read(r_fd, &prime, sizeof(int)) == 0) 
+        exit(0);
+    fprintf(2, "prime %d\n", prime);    
+    int pfd[2];
+    if(pipe(pfd) < 0) exit(1);
+    if(!fork())
     {
-        while(read(fa_fd[0], &x, sizeof(x)) != 0)
+        int num;
+        while(read(r_fd, &num, sizeof(int)) > 0)
         {
-            if(x % num)
-            {
-                if(write(son_fd[1], &x, sizeof(x)) == -1) 
-                {
-                    fprintf(2, "write error\n");
-                    exit(1);
-                }
-            }
+            if(num % prime)
+                write(pfd[1], &num, sizeof(int));
         }
-        close(fa_fd[0]);
-        close(son_fd[1]);    
-    }
-    else if(pid == 0)
-    {
-        fa_fd[0] = son_fd[0];
-        fa_fd[1] = son_fd[1];
-        if(read(fa_fd[0], &x, sizeof(x)) != 0) 
-        {
-            fprintf(2, "prime %d\n", x);
-            primes(x);
-        }
+        close(pfd[1]);
+        close(r_fd);
+        exit(0);
     }
     else
     {
-        fprintf(2, "fork error\n");
-        exit(1);
+        close(pfd[1]);
+        close(r_fd);
+        filter_num(pfd[0]);
     }
     exit(0);
 }
@@ -47,33 +35,20 @@ void primes(int num)
 int
 main(int argc, char *argv[])
 {
-    if(pipe(fa_fd) == -1) exit(1);
-    int pid = fork();
-    if(pid > 0)
+    int pfd[2];
+    if(pipe(pfd) < 0) exit(1);
+    int r_fd = pfd[0], w_fd = pfd[1];
+    if(fork() > 0) 
     {
-        for(int i = 2 ; i <= 280 ; ++ i) 
-            if(write(fa_fd[1], &i, sizeof(i)) == -1) 
-            {
-                fprintf(2, "write error\n");
-                exit(1);
-            }
-        close(fa_fd[1]);
-        int status;
-        wait(&status);
-    }
-    else if(pid == 0) 
-    {
-        int x;
-        if(read(fa_fd[0], &x, sizeof(x)) != 0) 
-        {
-            fprintf(2, "prime %d\n", x);
-            primes(x);
-        }          
-    }
+        for(int i = 2 ; i <= 280 ; i ++)
+            write(w_fd, &i, sizeof(int));
+        close(w_fd);
+        while(wait(0) > 0);
+        exit(0);
+    } 
     else 
     {
-        fprintf(2, "fork error\n");
-        exit(1);
+        close(w_fd);
+        filter_num(r_fd);
     }
-    exit(0);
 }
