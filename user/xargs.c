@@ -21,18 +21,18 @@ int main(int argc, char *argv[])
     // fprintf(2, "%d\n", idx);
     // for (int i = 0; i < idx; i++)
     //     fprintf(2, "%s\n", params[i]);
-
+    int pre_idx = idx;
     while(1) 
     {
         char c;
         if(read(0, &c, 1) <= 0) break;
         if(c == '\n') 
         {
-            if(p > 0)
-            {
-                params[idx][p] = '\0';
-                idx ++, p = 0;
-            }
+            params[idx][p] = '\0';
+            idx = pre_idx;
+            p = 0;
+            if(!fork()) exec(argv[1], params);
+            else wait(0);
         }
         else if(c == ' ')
         {
@@ -48,7 +48,9 @@ int main(int argc, char *argv[])
             params[idx][p ++] = c;
         }
     }
-    exec(argv[1], params);
+    if(idx > pre_idx)
+        exec(argv[1], params);
+    // exec(argv[1], params);
     // fprintf(2, "%d\n", idx);
     // for (int i = 0; i < idx; i++)
     //     fprintf(2, "%s\n", params[i]);
