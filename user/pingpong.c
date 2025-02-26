@@ -17,13 +17,13 @@ main(int argc, char *argv[])
         int status = 0;
         wait(&status);
         read(p[0], buf, 1);
-        fprintf(2, "%d: received pong\n", id);
+        fprintf(1, "%d: received pong\n", id);
     } 
     else if(pid == 0) 
     {
         read(p[0], buf, 1);
         int id = getpid();
-        fprintf(2, "%d: received ping\n", id);
+        fprintf(1, "%d: received ping\n", id);
         write(p[1], buf, 1);
     } else 
     {

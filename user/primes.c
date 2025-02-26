@@ -8,7 +8,7 @@ void filter_num(int r_fd)
     int prime;
     if(read(r_fd, &prime, sizeof(int)) == 0) 
         exit(0);
-    fprintf(2, "prime %d\n", prime);    
+    fprintf(1, "prime %d\n", prime);    
     int pfd[2];
     if(pipe(pfd) < 0) exit(1);
     if(!fork())

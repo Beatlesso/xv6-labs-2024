@@ -40,7 +40,7 @@ void find(char *path, char *name)
     case T_FILE:
     {
         if (check_name(path, name))
-            fprintf(2, "%s\n", path);
+            fprintf(1, "%s\n", path);
         break;
     }
     case T_DIR:
